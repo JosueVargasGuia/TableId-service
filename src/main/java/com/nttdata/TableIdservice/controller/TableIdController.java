@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,12 +29,12 @@ public class TableIdController {
 	@Autowired
 	TableIdService tableIdService;
 
-	@GetMapping
+	@GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
 	public Flux<TableId> findAll() {
 		return tableIdService.findAll();
 	}
 
-	@PostMapping
+	@PostMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
 	public Mono<ResponseEntity<TableId>> save(@RequestBody TableId tableId) {
 		return tableIdService.save(tableId).map(_tableId -> ResponseEntity.ok().body(_tableId)).onErrorResume(e -> {
 			log.info("Error:" + e.getMessage());
@@ -41,7 +42,7 @@ public class TableIdController {
 		});
 	}
 
-	@GetMapping("/{nameTable}")
+	@GetMapping(value="/{nameTable}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public Mono<ResponseEntity<TableId>> findById(@PathVariable(name = "nameTable") String nameTable) {
 		return tableIdService.findById(nameTable).map(tableId -> ResponseEntity.ok().body(tableId)).onErrorResume(e -> {
 			log.info(e.getMessage());
@@ -49,7 +50,7 @@ public class TableIdController {
 		}).defaultIfEmpty(ResponseEntity.noContent().build());
 	}
 
-	@PutMapping
+	@PutMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
 	public Mono<ResponseEntity<TableId>> update(@RequestBody TableId tableId) {
 
 		Mono<TableId> mono = tableIdService.findById(tableId.getNameTable()).flatMap(objTableId -> {
@@ -67,13 +68,13 @@ public class TableIdController {
 
 	}
 
-	@DeleteMapping("/{nameTable}")
+	@DeleteMapping(value="/{nameTable}",produces = MediaType.APPLICATION_JSON_VALUE)
 	public Mono<ResponseEntity<Void>> delete(@PathVariable(name = "nameTable") String nameTable) {
 		return tableIdService.findById(nameTable).flatMap(credit -> {
 			return tableIdService.delete(credit.getNameTable()).then(Mono.just(ResponseEntity.ok().build()));
 		});
 	}
-	@GetMapping("/generateKey/{nameTable}")
+	@GetMapping(value="/generateKey/{nameTable}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public Mono<Long> generateKey(@PathVariable(name = "nameTable") String nameTable) {
 		return tableIdService.generateKey(nameTable);
 				/*.map(tableId -> ResponseEntity.ok().body(tableId)).onErrorResume(e -> {
