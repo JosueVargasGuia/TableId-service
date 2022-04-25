@@ -51,24 +51,25 @@ public class TableIdServiceImpl implements TableIdService {
 
 	@Override
 	public Mono<Long> generateKey(String nameTable) {
-		TableId tableId = (TableId) tableIdRepository.findById(nameTable).toFuture().join();
+	 return tableIdRepository.findById(nameTable)
+				.defaultIfEmpty(new TableId(nameTable, Long.valueOf(-1)))
+				.flatMap(tableId->{
+					if (tableId.getSecuencia()>=1) {
+						log.info("tableId:"+tableId.toString());
+						tableId.setSecuencia(tableId.getSecuencia()+1);			
+						return this.update(tableId).flatMap(_obj -> {
+							log.info("update[generateKey]:" + _obj.toString());
+							return  Mono.just(_obj.getSecuencia());
+						});						
+					} else {
+						tableId = new TableId(nameTable, Long.valueOf(1));			
+						return this.save(tableId).flatMap(_obj -> {
+							log.info("save[generateKey]:" + _obj.toString());
+							return Mono.just(_obj.getSecuencia());
+						});						
+					}					 
+				}); 
 		
-		if (tableId != null) {
-			log.info("tableId:"+tableId.toString());
-			tableId.setSecuencia(Long.valueOf(tableId.getSecuencia()+1));			
-			return this.update(tableId).map(_obj -> {
-				log.info("save[generateKey]:" + _obj.toString());
-				return _obj.getSecuencia();
-			});
-			//return Mono.just(tableId.getSecuencia());
-		} else {
-			tableId = new TableId(nameTable, Long.valueOf(1));			
-			return this.save(tableId).map(_obj -> {
-				log.info("update[generateKey]:" + _obj.toString());
-				return _obj.getSecuencia();
-			});
-			//return Mono.just(tableId.getSecuencia());
-		}
 	}
 
 }
